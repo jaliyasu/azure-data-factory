@@ -1,0 +1,9 @@
+{
+	"name": "data-factory-1010-jsps",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "5e2acf6f-cbcb-4b53-9e5c-2384b0bc234b",
+		"tenantId": "7181a37a-e7e2-490c-9153-30b0d403a26d"
+	}
+}
