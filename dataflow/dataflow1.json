@@ -12,18 +12,13 @@
 					"name": "jsonsource2024"
 				}
 			],
-			"sinks": [
-				{
-					"dataset": {
-						"referenceName": "AzureSqlTablejson",
-						"type": "DatasetReference"
-					},
-					"name": "jsondestination"
-				}
-			],
+			"sinks": [],
 			"transformations": [
 				{
-					"name": "select1"
+					"name": "flatten1"
+				},
+				{
+					"name": "flatten2"
 				}
 			],
 			"scriptLines": [
@@ -34,26 +29,20 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
 				"     documentForm: 'arrayOfDocuments') ~> jsonsource2024",
-				"jsonsource2024 select(mapColumn(",
-				"          quiz",
-				"     ),",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1",
-				"select1 sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     input(",
-				"          q_id as integer,",
-				"          q_details as string",
-				"     ),",
-				"     deletable:false,",
-				"     insertable:true,",
-				"     updateable:false,",
-				"     upsertable:false,",
-				"     format: 'table',",
-				"     errorHandlingOption: 'stopOnFirstError',",
+				"jsonsource2024 foldDown(unroll(quiz.sport.q1.options),",
 				"     mapColumn(",
-				"          q_details = quiz",
-				"     )) ~> jsondestination"
+				"          sport_quiz_1 = quiz.maths.q1.question",
+				"     ),",
+				"     partitionBy('hash', 1),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
+				"jsonsource2024 foldDown(unroll(quiz.maths.q1.options),",
+				"     mapColumn(",
+				"          math_question = quiz.maths.q1.question,",
+				"          options = quiz.maths.q1.options",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten2"
 			]
 		}
 	}
