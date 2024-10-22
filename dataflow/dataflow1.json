@@ -1,0 +1,60 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "jsonconnection",
+						"type": "DatasetReference"
+					},
+					"name": "jsonsource2024"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTablejson",
+						"type": "DatasetReference"
+					},
+					"name": "jsondestination"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          quiz as (maths as (q1 as (answer as short, options as short[], question as string), q2 as (answer as short, options as short[], question as string)), sport as (q1 as (answer as string, options as string[], question as string)))",
+				"     ),",
+				"     allowSchemaDrift: false,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> jsonsource2024",
+				"jsonsource2024 select(mapColumn(",
+				"          quiz",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          q_id as integer,",
+				"          q_details as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          q_details = quiz",
+				"     )) ~> jsondestination"
+			]
+		}
+	}
+}
