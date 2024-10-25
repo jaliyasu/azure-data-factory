@@ -1,0 +1,22 @@
+{
+	"name": "parameterisation",
+	"properties": {
+		"parameters": {
+			"incremental": {
+				"type": "int",
+				"defaultValue": 0
+			},
+			"full_load": {
+				"type": "int",
+				"defaultValue": 0
+			}
+		},
+		"variables": {
+			"status": {
+				"type": "Integer",
+				"defaultValue": 0
+			}
+		},
+		"annotations": []
+	}
+}
