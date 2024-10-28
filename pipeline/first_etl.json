@@ -142,6 +142,10 @@
 										"typeProperties": {
 											"source": {
 												"type": "AzureSqlSource",
+												"sqlReaderQuery": {
+													"value": "begin\nupdate [dbo].[cfg] set Max_LastUpdatedDate=GETDATE()\nWHERE Table_Name='@{item().Table_Name}';\n\nSELECT 'Update Successful' AS Result;\nend",
+													"type": "Expression"
+												},
 												"queryTimeout": "02:00:00",
 												"partitionOption": "None"
 											},
@@ -150,7 +154,10 @@
 												"type": "DatasetReference",
 												"parameters": {
 													"source_schema": "dbo",
-													"source_tbl": "sys"
+													"source_tbl": {
+														"value": "@item().Table_Name",
+														"type": "Expression"
+													}
 												}
 											}
 										}
