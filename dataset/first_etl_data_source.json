@@ -1,0 +1,32 @@
+{
+	"name": "first_etl_data_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"source_schema": {
+				"type": "String",
+				"defaultValue": "dbo"
+			},
+			"source_tbl": {
+				"type": "String",
+				"defaultValue": "sys"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().source_schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().source_tbl",
+				"type": "Expression"
+			}
+		}
+	}
+}
