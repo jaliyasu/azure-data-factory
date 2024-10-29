@@ -592,68 +592,124 @@
 							},
 							"activities": [
 								{
-									"name": "Copy data1",
-									"type": "Copy",
+									"name": "If Condition1",
+									"type": "IfCondition",
 									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
 									"userProperties": [],
 									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderQuery": {
-												"value": "@concat('select * from ',item().Table_Name)",
-												"type": "Expression"
+										"expression": {
+											"value": "@equals(item().Enabled,1)",
+											"type": "Expression"
+										},
+										"ifTrueActivities": [
+											{
+												"name": "Copy data1",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "AzureSqlSource",
+														"sqlReaderQuery": {
+															"value": "@concat('select * from ',item().Table_Name)",
+															"type": "Expression"
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"sink": {
+														"type": "AzureSqlSink",
+														"writeBehavior": "insert",
+														"sqlWriterUseTableLock": false
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "first_etl_data_source",
+														"type": "DatasetReference",
+														"parameters": {
+															"source_schema": "dbo",
+															"source_tbl": {
+																"value": "@item().Table_Name",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "first_etl_data_source",
+														"type": "DatasetReference",
+														"parameters": {
+															"source_schema": "staging",
+															"source_tbl": {
+																"value": "@item().Table_Name",
+																"type": "Expression"
+															}
+														}
+													}
+												]
 											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "AzureSqlSink",
-											"writeBehavior": "insert",
-											"sqlWriterUseTableLock": false
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "first_etl_data_source",
-											"type": "DatasetReference",
-											"parameters": {
-												"source_schema": "dbo",
-												"source_tbl": {
-													"value": "@item().Table_Name",
-													"type": "Expression"
+											{
+												"name": "Lookup1",
+												"type": "Lookup",
+												"dependsOn": [
+													{
+														"activity": "Copy data1",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "AzureSqlSource",
+														"sqlReaderQuery": {
+															"value": "begin\nupdate [dbo].[cfg] set Max_LastUpdatedDate=GETDATE()\nWHERE Table_Name='@{item().Table_Name}';\n\nSELECT 'Update Successful' AS Result;\nend",
+															"type": "Expression"
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"dataset": {
+														"referenceName": "first_etl_data_source",
+														"type": "DatasetReference",
+														"parameters": {
+															"source_schema": "dbo",
+															"source_tbl": {
+																"value": "@item().Table_Name",
+																"type": "Expression"
+															}
+														}
+													}
 												}
 											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "first_etl_data_source",
-											"type": "DatasetReference",
-											"parameters": {
-												"source_schema": "staging",
-												"source_tbl": {
-													"value": "@item().Table_Name",
-													"type": "Expression"
-												}
-											}
-										}
-									]
+										]
+									}
 								}
 							]
 						}
@@ -836,6 +892,41 @@
 				"[concat(variables('factoryId'), '/datasets/csv_chocolate')]",
 				"[concat(variables('factoryId'), '/datasets/chocolate_data')]",
 				"[concat(variables('factoryId'), '/datasets/AzureSqlTablejson')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/daily_trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "parameterisation",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 14,
+						"startTime": "2024-10-29T00:36:00",
+						"timeZone": "New Zealand Standard Time",
+						"schedule": {
+							"hours": [
+								10
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/parameterisation')]"
 			]
 		}
 	]
