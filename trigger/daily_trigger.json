@@ -1,0 +1,29 @@
+{
+	"name": "daily_trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "parameterisation",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 14,
+				"startTime": "2024-10-29T00:36:00",
+				"timeZone": "New Zealand Standard Time",
+				"schedule": {
+					"hours": [
+						10
+					]
+				}
+			}
+		}
+	}
+}
