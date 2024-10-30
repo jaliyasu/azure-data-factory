@@ -1,0 +1,128 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase",
+						"type": "LinkedServiceReference"
+					},
+					"name": "stagingtbl"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase",
+						"type": "LinkedServiceReference"
+					},
+					"name": "targetTbl"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase",
+						"type": "LinkedServiceReference"
+					},
+					"name": "newDataSink"
+				},
+				{
+					"linkedService": {
+						"referenceName": "AzureSqlDatabase",
+						"type": "LinkedServiceReference"
+					},
+					"name": "updateSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "exists1"
+				},
+				{
+					"name": "overwriteRecords"
+				},
+				{
+					"name": "alterRow1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          SalesRep_Number as integer,",
+				"          SalesRep_Name as string,",
+				"          SalesRep_Department as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'query',",
+				"     store: 'sqlserver',",
+				"     query: 'SELECT * FROM staging.STG_Sales_Rep',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> stagingtbl",
+				"source(output(",
+				"          SalesRep_Key as integer,",
+				"          SalesRep_Number as integer,",
+				"          SalesRep_Name as string,",
+				"          SalesRep_Department as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'query',",
+				"     store: 'sqlserver',",
+				"     query: 'SELECT * FROM dbo.Dim_SalesRep',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> targetTbl",
+				"stagingtbl, targetTbl exists(stagingtbl@SalesRep_Number == targetTbl@SalesRep_Number,",
+				"     negate:true,",
+				"     broadcast: 'auto')~> exists1",
+				"targetTbl, stagingtbl exists(targetTbl@SalesRep_Number == stagingtbl@SalesRep_Number,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> overwriteRecords",
+				"overwriteRecords alterRow(updateIf(true())) ~> alterRow1",
+				"exists1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          SalesRep_Key as integer,",
+				"          SalesRep_Number as integer,",
+				"          SalesRep_Name as string,",
+				"          SalesRep_Department as string",
+				"     ),",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'Dim_SalesRep',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          SalesRep_Number,",
+				"          SalesRep_Name,",
+				"          SalesRep_Department",
+				"     )) ~> newDataSink",
+				"alterRow1 sink(allowSchemaDrift: false,",
+				"     validateSchema: true,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: '',",
+				"     tableName: '',",
+				"     insertable: false,",
+				"     updateable: true,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     keys:['SalesRep_Number'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          SalesRep_Key,",
+				"          SalesRep_Number,",
+				"          SalesRep_Name,",
+				"          SalesRep_Department",
+				"     )) ~> updateSink"
+			]
+		}
+	}
+}
